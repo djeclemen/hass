@@ -29,21 +29,20 @@ trigger:
     minutes: "/30"  # Kør hvert 30. minut
 
 condition:
-  - condition: and
-    conditions:
-      - condition: state
-        entity_id: !input "alarm_entity"
-        state: "disarmed"  # Alarmen er ikke aktiveret
-      - condition: template
-        value_template: >
-          {{ expand(!input "person_entities") | selectattr('state', 'eq', 'not_home') | list | length == expand(!input "person_entities") | list | length }}
+  - condition: state
+    entity_id: !input "alarm_entity"
+    state: "disarmed"  # Alarmen er ikke aktiveret
+  - condition: template
+    value_template: >
+      {% set persons = expand(states.person) | selectattr('entity_id', 'in', input_person_entities) | list %}
+      {{ persons | selectattr('state', 'eq', 'not_home') | list | length == persons | length }}
 
 action:
   - repeat:
-      count: "{{ expand(!input 'notification_services') | list | length }}"
+      count: "{{ expand(states.notify) | selectattr('entity_id', 'in', input_notification_services) | list | length }}"
       sequence:
         - service: notify.mobile_app
           data:
             message: "Ingen er hjemme, og alarmen er ikke aktiveret. Husk at aktivere den!"
             target: >
-              {{ expand(!input 'notification_services') | list | repeat.index - 1 }}
+              {{ expand(states.notify) | selectattr('entity_id', 'in', input_notification_services) | list | repeat.index - 1 }}
