@@ -1,5 +1,5 @@
 blueprint:
-  name: Alarm Notification Hver 30. Minut (Flere Notifikationstjenester)
+  name: Alarm Notification Hver 30. Minut v1
   description: Tjek hvert 30. minut, om ingen er hjemme, og alarmen ikke er tilkoblet. Send en pushbesked til flere tjenester, hvis det er tilfældet.
   domain: automation
   input:
