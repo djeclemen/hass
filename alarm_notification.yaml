@@ -1,6 +1,6 @@
 blueprint:
-  name: Alarm Notification Hver 30. Minut
-  description: Tjek hvert 30. minut, om ingen er hjemme, og alarmen ikke er tilkoblet. Send en pushbesked, hvis det er tilfældet.
+  name: Alarm Notification Hver 30. Minut (Flere Notifikationstjenester)
+  description: Tjek hvert 30. minut, om ingen er hjemme, og alarmen ikke er tilkoblet. Send en pushbesked til flere tjenester, hvis det er tilfældet.
   domain: automation
   input:
     person_entities:
@@ -16,12 +16,13 @@ blueprint:
       selector:
         entity:
           domain: alarm_control_panel
-    notification_service:
-      name: Pushbesked service
-      description: Vælg notifikationsservicen til push-beskeder.
+    notification_services:
+      name: Pushbesked services
+      description: Vælg en eller flere notifikationsservices.
       selector:
-        device:
-          integration: mobile_app
+        target:
+          entity:
+            integration: mobile_app
 
 trigger:
   - platform: time_pattern
@@ -38,6 +39,11 @@ condition:
           {{ expand(!input "person_entities") | selectattr('state', 'eq', 'not_home') | list | length == expand(!input "person_entities") | list | length }}
 
 action:
-  - service: notify.mobile_app_{{ device_id }}
-    data:
-      message: "Ingen er hjemme, og alarmen er ikke aktiveret. Husk at aktivere den!"
+  - repeat:
+      count: "{{ expand(!input 'notification_services') | list | length }}"
+      sequence:
+        - service: notify.mobile_app
+          data:
+            message: "Ingen er hjemme, og alarmen er ikke aktiveret. Husk at aktivere den!"
+            target: >
+              {{ expand(!input 'notification_services') | list | repeat.index - 1 }}
